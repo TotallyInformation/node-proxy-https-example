@@ -16,19 +16,21 @@ var http      = require('http'),
 
 require('date-utils');
 
+/*
 // define proxy routes - DOH! doesn't work with https options
 var proxy_options = {
   router: {
-    'totallyinformation.net': '127.0.0.1:3000',
-    'serviceto.us': '127.0.0.1:3001'
+    'DOMAIN1.net': '127.0.0.1:3000',
+    'DOMAIN2.com': '127.0.0.1:3001'
   }
 };
+*/
 
 /* BAH - can't use this with a routing table
 var options = {
   https: {
-    key: fs.readFileSync('/var/nodejs/totallyinformation.key'),
-    cert: fs.readFileSync('/var/nodejs/totallyinformation.crt')
+    key: fs.readFileSync('/some/place/secure/some.key'),
+    cert: fs.readFileSync('/some/place/secure/some.crt')
   },
   target: {
     https: true // This could also be an Object with key and cert properties
@@ -38,8 +40,8 @@ var options = {
 
 // since we can't use the simple form, we need std certificate params
 var options = {
-  key: fs.readFileSync('/var/nodejs/totallyinformation.key'),
-  cert: fs.readFileSync('/var/nodejs/totallyinformation.crt')
+  key: fs.readFileSync('/some/place/secure/some.key'),
+  cert: fs.readFileSync('/some/place/secure/some.crt')
 };
 
 
@@ -54,8 +56,8 @@ var myNow; // for recording time
 var auth  = require('http-auth'),
     basic = auth({
       authRealm : "Internal TI.net Term1",
-      //authFile  : '/var/www/.htpasswd-users',
-      authList  : ['julian:PASSWORD'],
+      //authFile  : '/var/www/.htpasswd-users', // Bah! annoying that http-auth doesn't understand Apache .htpasswd files
+      authList  : ['USER1:PASSWORD'],
       authType  : 'basic'
     });
 
@@ -75,16 +77,6 @@ https.createServer(options, function (req, res) {
     'Port':reqPort, 'url':req.url
   });
 
-  /**
-   * /ajaxterm/ http://localhost:8022/
-   *
-   * s:st.us:8000/      -> -:lh:8022 :: ajaxterm - not reliable behind corp f/w
-   * s:ti.net:8000/     -> s:lh:8002
-   * s:ti.net:8000/3000 -> s:lh:3000 :: derby - test
-   * debug console
-   *
-   */
-  
   // --- Host routing --- //
   if (reqDom.toLowerCase() === "totallyinformation.net") {
     if (req.url === "/debug") {
