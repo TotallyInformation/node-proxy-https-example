@@ -1,11 +1,15 @@
 #!/usr/local/bin/node
 
 /**
- * Code to run a SECURE (https) proxy server
+ * Code to run a SECURE (https) proxy server for multiple virtual domains
+ * e.g. multiple domains (or sub-domains) with the same IP address
+ * NOTE: To have a SINGLE certificate as defined here, you need to have
+ *       a wildcard certificate or be using the "Subject Alternative Name" extension
  * NOTE: http-proxy CANNOT do both https and
  *       use a routing table at the same time
  *       so we have to do it the hard way
  * @author Julian Knight, http://it.knightnet.org.uk
+ * @version v0.2 2012-05-05
  */
 
 var http      = require('http'),
@@ -78,7 +82,8 @@ https.createServer(options, function (req, res) {
   });
 
   // --- Host routing --- //
-  if (reqDom.toLowerCase() === "totallyinformation.net") {
+  if (reqDom.toLowerCase() === "DOMAIN1.net") {
+    // Example of direct return of data to client
     if (req.url === "/debug") {
         console.log("%s Direct output of debug page", myNow);
         // Hmm, since this is an http(s) server, we can also
@@ -89,6 +94,8 @@ https.createServer(options, function (req, res) {
         res.write(require("util").inspect(parsedUrl));
         res.end();
     } else if (req.url.toLowerCase() === "/3000") {
+        // Example of routing from a source folder (e.g. DOMAIN1.net/3000 -> localhost:3000)
+        // Note that the destination doesn't have https but the incoming request does
         console.log("%s Proxying to https://localhost:3000", myNow);
         // Ready to proxy
         proxy.proxyRequest(req, res, {
@@ -96,6 +103,7 @@ https.createServer(options, function (req, res) {
           port: 3000
         });
     } else {
+        // default route for DOMAIN1.net
         console.log("%s Proxying to https://localhost:8002", myNow);
         // Ready to proxy
         proxy.proxyRequest(req, res, {
@@ -104,22 +112,20 @@ https.createServer(options, function (req, res) {
           target: { https: true }
         });
     }
-  } else if (reqDom.toLowerCase() === "serviceto.us") {
+  } else if (reqDom.toLowerCase() === "DOMAIN2.com") {   // second domain
     console.log("%s Proxying to http://localhost:8022", myNow);
-    // Proxy ajaxterm
-    // We need to wrap this in an http basic auth since ajaxterm
-    // doesn't do this
+    // Here we wrap the proxy with HTTPS Basic Authentication rather
+    // than making the destination do it.
+    // We are using the http-auth library as a helper
+    // Again, the destination doesn't need to have https
     basic.apply(req, res, function() {
         proxy.proxyRequest(req, res, {
             host : 'localhost',
             port : 8022
         });
     });
-  } else if (reqDom.toLowerCase() === "service-to.us") {
+  } else if (reqDom.toLowerCase() === "DOMAIN3.com") {    // third domain
     console.log("%s Proxying to http://localhost:8010", myNow);
-    // Proxy ajaxterm
-    // We need to wrap this in an http basic auth since ajaxterm
-    // doesn't do this
     basic.apply(req, res, function() {
         proxy.proxyRequest(req, res, {
             host : 'localhost',
@@ -127,6 +133,7 @@ https.createServer(options, function (req, res) {
         });
     });
   } else {
+    // Come here if the incoming request is not a known domain
     console.log("%s Not a known route - cannot proxy %s%s", myNow, req.headers.host, req.url);
     res.writeHead(404, {"Content-Type": "text/plain"});
     res.write(myNow + "Unknown route - cannot dispatch");
