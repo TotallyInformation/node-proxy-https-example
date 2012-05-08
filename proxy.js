@@ -55,7 +55,7 @@ var auth  = require('http-auth'),
     basic = auth({
       authRealm : "Internal TI.net Term1",
       //authFile  : '/var/www/.htpasswd-users',
-      authList  : ['julian:Jk.BHost.(....)'],
+      authList  : ['julian:PASSWORD'],
       authType  : 'basic'
     });
 
